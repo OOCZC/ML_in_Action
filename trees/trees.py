@@ -6,6 +6,7 @@ import operator
 import matplotlib
 import matplotlib.pyplot as plt
 from math import log
+import treePlotter
 '''
 计算香农熵，只计算标签。
 dataSet是二维List
@@ -25,19 +26,6 @@ def calcShannonEnt(dataSet):
 		shannonEnt -= prob * log(prob, 2)
 	return shannonEnt
 
-'''
-dataSet的最后一个是后面需要判断的属性
-'''
-def createDataSet():
-	dataSet = [[1, 1, 'yes'],
-		[1, 1, 'yes'],
-		[1, 0, 'no'],
-		[0, 1, 'no'],
-		[0, 1, 'no']]
-	#通过前两个属性，判断最后一个。
-	labels = ['no surfacing', 'flippers']	
-	#前两个属性是什么，后面不太需要用到
-	return dataSet, labels
 '''
 把axis轴值为value的数据分割出来，axis轴的数据不保留
 '''
@@ -130,16 +118,37 @@ def createTree(dataSet,labels):
     return myTree                            
 
 
-dataSet, labels = createDataSet()
-trees = createTree(dataSet, labels)
-print trees
+'''
+dataSet的最后一个是后面需要判断的属性
+'''
 
+def createDataSet():
+	dataSet = [[1, 1, 'yes'],
+		[1, 1, 'yes'],
+		[1, 0, 'no'],
+		[0, 1, 'no'],
+		[0, 1, 'no']]
+	#通过前两个属性，判断最后一个。
+	labels = ['no surfacing', 'flippers']	
+	#前两个属性是什么，后面不太需要用到
+	return dataSet, labels
 
+def retrieveTree(i):
+    # retrieve 取回，恢复
+    listOfTrees =[{'no surfacing': {0: 'no', 1: {'flippers': {0: 'no', 1: 'yes'}}}},
+                  {'no surfacing': {0: 'no', 1: {'flippers': {0:'no',1:'yes'}},3:'maybe'}}
+                  ]
+    return listOfTrees[i]
+
+'''
+判断testVec的所属类型，inputTree是已构建好的决策树(dict实现)
+featLabels是特征标签的名称，即createDataSet()中的labels
 '''
 def classify(inputTree,featLabels,testVec):
     firstStr = inputTree.keys()[0]
     secondDict = inputTree[firstStr]
     featIndex = featLabels.index(firstStr)
+    #将标签字符串转化为索引
     key = testVec[featIndex]
     valueOfFeat = secondDict[key]
     if isinstance(valueOfFeat, dict): 
@@ -147,20 +156,39 @@ def classify(inputTree,featLabels,testVec):
     else: classLabel = valueOfFeat
     return classLabel
 
+'''
+把构建好的决策树存储在硬盘上
+'''
 def storeTree(inputTree,filename):
+    #把构建好的决策树存储在硬盘上
     import pickle
+    #用pickle模块序列化对象
     fw = open(filename,'w')
     pickle.dump(inputTree,fw)
     fw.close()
     
+'''
+从硬盘上读取决策树
+'''
 def grabTree(filename):
+    #从硬盘上读取决策树
     import pickle
     fr = open(filename)
     return pickle.load(fr)
-    
-	
 
+fr = open('lenses.txt')
+lenses = [i.strip().split('\t') for i in fr.readlines()]
+#split() 默认分割所有空白字符
+print lenses
+lensesLabels = ['age', 'prescript', 'astigmatic', 'tearRate']
+lensesTree = createTree(lenses, lensesLabels)
+treePlotter.createPlot(lensesTree)
 
-myDat, label = createDataSet()
-print calcShannonEnt(myDat)
+'''
+dataSet, labels = createDataSet()
+tree = retrieveTree(0)
+storeTree(tree, 'tree.txt')
+tree1 = grabTree('tree.txt')
+print tree1
+#print classify(tree, labels, [1,0])
 '''

@@ -88,5 +88,7 @@ def retrieveTree(i):
                   ]
     return listOfTrees[i]
 
+'''
 thisTree = retrieveTree(1)
 createPlot(thisTree)
+'''

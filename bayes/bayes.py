@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from numpy import *
 import uniout  #让list正常输出中文，不显示unicode
 
@@ -11,6 +14,11 @@ def loadDataSet():
     classVec = [0,1,0,1,0,1]    #1 is abusive, 0 not
     return postingList,classVec
 
+def textParse(bigString):
+	import re
+	listOfTokens = re.split(r'\W*', bigString)
+	return [tok.lower() for tok in listOfTokens if len(tok) > 2]
+	
 '''
 dataSet是loadDataSet()中的postingList
 '''
@@ -19,6 +27,15 @@ def createVocabList(dataSet):
     for document in dataSet:
         vocabSet = vocabSet | set(document) #union of the two sets
     return list(vocabSet)
+
+def bagOfWords2Vec(vocabList, inputSet):
+    #词袋模型
+    #在区域倾向测试中使用词袋模型正确率0.9,setOfWordsVec正确率为0.45
+    returnVec = [0]*len(vocabList)
+    for word in inputSet:
+        if word in vocabList:
+            returnVec[vocabList.index(word)] += 1
+    return returnVec
 
 def setOfWords2Vec(vocabList, inputSet):
     returnVec = [0]*len(vocabList)
@@ -36,7 +53,7 @@ trainNB(trainMatrix, trainCategory):
 #trainMatrix是二维array类型，为词向量矩阵,每一行为词向量
 array((1,0,1,0,1,0),(0,1,1,1,0,1),(0,0,1,1,1,0))
 #trainCategory是一维array类型，标记每个词向量的类型
-array(1,0,0,0,1,0,1)
+array(1,0,0)
 
 p0Vec,p1Vec:array型一维数组，与词向量等长，表示在0/1型短
 信中各个词出现的概率，即P(w|c)
@@ -116,6 +133,7 @@ def spamTest():
         fullText.extend(wordList)
         classList.append(0)
     vocabList = createVocabList(docList)#create vocabulary
+    #以下为交叉验证
     trainingSet = range(50); testSet=[]           #create test set
     for i in range(10):
         randIndex = int(random.uniform(0,len(trainingSet)))
@@ -136,7 +154,9 @@ def spamTest():
     #return vocabList,fullText
 
 
-
+'''
+从个人广告中获取区域倾向
+'''
 
 '''
 vocabList是去重后的fullText。
@@ -153,7 +173,7 @@ def calcMostFreq(vocabList,fullText):
 
 def localWords(feed1,feed0):
     #feed1, feed0是dict类型，由feedparser.parse('http://xx.com/in.rss')返回得来
-    import feedparser
+    #import feedparser
     docList = []; classList = []; fullText = []
     minLen = min(len(feed1['entries']),len(feed0['entries']))
     for i in range(minLen):
@@ -171,26 +191,33 @@ def localWords(feed1,feed0):
     #vocabList是去重后的fullText
     for pairW in top30Words:
         if pairW[0] in vocabList: vocabList.remove(pairW[0])
-        #上面这条if肯定成立?
     trainingSet = range(2*minLen); testSet=[]   #create test set
     for i in range(20):
         randIndex = int(random.uniform(0,len(trainingSet)))
         testSet.append(trainingSet[randIndex])
+        #随机构建测试集及训练集
         del(trainingSet[randIndex])
     trainMat=[]; trainClasses = []
     for docIndex in trainingSet:#train the classifier (get probs) trainNB0
-        trainMat.append(bagOfWords2VecMN(vocabList, docList[docIndex]))
+        trainMat.append(bagOfWords2Vec(vocabList, docList[docIndex]))
         trainClasses.append(classList[docIndex])
     p0V,p1V,pSpam = trainNB0(array(trainMat),array(trainClasses))
     errorCount = 0
     for docIndex in testSet:        #classify the remaining items
-        wordVector = bagOfWords2VecMN(vocabList, docList[docIndex])
+        wordVector = bagOfWords2Vec(vocabList, docList[docIndex])
         if classifyNB(array(wordVector),p0V,p1V,pSpam) != classList[docIndex]:
             errorCount += 1
     print 'the error rate is: ',float(errorCount)/len(testSet)
     return vocabList,p0V,p1V
+    #这里的vocabList是去除了前30单词的。
 
-def getTopWords(ny,sf):
+'''
+nf = feedparser.parse('http://newyork.craigslist.org/stp/index.rss')
+sf = feedparser.parse('http://sfbay.craigslist.org/stp/index.rss')
+getTopWords(nf,sf,10)
+这里10为输出概率最高的前10个
+'''
+def getTopWords(ny,sf,num):
     import operator
     vocabList,p0V,p1V=localWords(ny,sf)
     topNY=[]; topSF=[]
@@ -198,10 +225,10 @@ def getTopWords(ny,sf):
         if p0V[i] > -6.0 : topSF.append((vocabList[i],p0V[i]))
         if p1V[i] > -6.0 : topNY.append((vocabList[i],p1V[i]))
     sortedSF = sorted(topSF, key=lambda pair: pair[1], reverse=True)
-    print "SF**SF**SF**SF**SF**SF**SF**SF**SF**SF**SF**SF**SF**SF**SF**SF**"
-    for item in sortedSF:
-        print item[0]
+    print "SF"
+    for i in range(10):
+        print sortedSF[i][0]
     sortedNY = sorted(topNY, key=lambda pair: pair[1], reverse=True)
-    print "NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**"
-    for item in sortedNY:
-        print item[0]
+    print "NY"
+    for i in range(10):
+        print sortedSF[i][0]

@@ -2,10 +2,12 @@
 # -*- coding: utf-8 -*-
 
 #from math import exp
+from sys import argv
 from numpy import mat, matrix
 from numpy import shape,ones
 import numpy
 import types
+import random
 def loadDataSet():
 	dataMat = []; labelMat = []
 	fr = open('testSet.txt')
@@ -69,13 +71,14 @@ def plotBestFit(weights):
     #返回array数组，三个参数时，起点，终点，步长
     y = (-weights[0]-weights[1]*x)/weights[2]
     #这里weights[0]是array类型
-    print weights[0],'37427429'
+    #print weights[0],'37427429'
     ax.plot(x, y)
 
     plt.xlabel('X1'); plt.ylabel('X2'); #横纵坐标标签
     plt.show() #显示图像
 
 def stocGradAscent0(dataMatrix, classLabels):
+    #在数据集上迭代一次
     m,n = shape(dataMatrix)
     alpha = 0.01
     weights = ones(n)   #initialize to all ones
@@ -86,6 +89,7 @@ def stocGradAscent0(dataMatrix, classLabels):
     return weights
 
 def stocGradAscent1(dataMatrix, classLabels, numIter=150):
+    #在数据集上迭代numIter次
     m,n = shape(dataMatrix)
     weights = ones(n)   #initialize to all ones
     for j in range(numIter):
@@ -106,7 +110,13 @@ def classifyVector(inX, weights):
 
 
 if __name__ == '__main__':
-	dataMat, labelMat = loadDataSet()
-	weights = gradAscent(dataMat, labelMat)
-	plotBestFit(weights.getA())  #matrix转化为narray
-	#plotBestFit(weights)
+	if len(argv) == 2:
+		#argv 接收命令行参数
+		dataMat, labelMat = loadDataSet()
+		weights = stocGradAscent1(numpy.array(dataMat), labelMat)
+		plotBestFit(weights)
+	else:
+		dataMat, labelMat = loadDataSet()
+		weights = gradAscent(dataMat, labelMat)
+		plotBestFit(weights.getA())  #matrix转化为narray
+		#plotBestFit(weights)

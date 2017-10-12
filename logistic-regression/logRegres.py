@@ -20,7 +20,7 @@ def loadDataSet():
 	return dataMat, labelMat
 
 def sigmoid(inX):
-	return 1.0/(1+numpy.exp(-inX))
+	return 1.0 / (1 + numpy.exp(-inX))
 
 def gradAscent(dataMatIn, classLabels):
 	dataMatrix = mat(dataMatIn)

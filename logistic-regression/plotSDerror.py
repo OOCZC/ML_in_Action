@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from numpy import *
 import matplotlib
 import matplotlib.pyplot as plt
@@ -50,15 +51,17 @@ markers =[]
 colors =[]
 
 
-fig = plt.figure()
+fig = plt.figure() #创建图表
 ax = fig.add_subplot(311)
-type1 = ax.plot(myHist[:,0])
+#增加子图，三个数字的含义如下
+#把画布分成3行1列，图像画在从左到右从上到下的第1块。
+ax.plot(myHist[:,0])
 plt.ylabel('X0')
 ax = fig.add_subplot(312)
-type1 = ax.plot(myHist[:,1])
+ax.plot(myHist[:,1])
 plt.ylabel('X1')
 ax = fig.add_subplot(313)
-type1 = ax.plot(myHist[:,2])
+ax.plot(myHist[:,2])
 plt.xlabel('iteration')
 plt.ylabel('X2')
 plt.show()

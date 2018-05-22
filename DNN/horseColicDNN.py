@@ -4,8 +4,8 @@ import tensorflow as tf
 TrainPath = '../logistic-regression/horseColic/horseColicTraining.txt'
 TestPath = '../logistic-regression/horseColic/horseColicTest.txt'
 batch_size = 16
-hidden_layer = 4  # only one hidden layer
-epochs = 1000
+hidden_layer = 4  
+epochs = 100
 
 w1 = tf.Variable(tf.random_normal([21, hidden_layer], stddev = 1, seed = 1)) # stddev 是标准差
 w2 = tf.Variable(tf.random_normal([hidden_layer, 1], stddev = 1, seed = 1))
@@ -22,6 +22,8 @@ y_hat = tf.sigmoid(h)
 cross_entropy = -tf.reduce_mean(
     Y * tf.log(tf.clip_by_value(y_hat, 1e-10, 1.0)) +
     (1 - Y) * tf.log(tf.clip_by_value((1 - y_hat), 1e-10, 1.0))) # reduce_mean 是求平均值
+# L2 正则化
+# tf.contrib.layers.l2_regularizer(lambda)(w)
 train_step = tf.train.AdamOptimizer(0.001).minimize(cross_entropy)
 
 # read file
@@ -50,6 +52,12 @@ print('shape Y_train : ', len(Y_train), len(Y_train[0]))
 print('Y_train like ', Y_train[0])
 #print('Y_train is ', Y_train)
 
+'''
+# forecast
+y_hat_ = tf.greater(y_hat, 0.5).eval()
+correct_prediction = tf.equal(y_hat_, Y)
+accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+'''
 
 with tf.Session() as sess:
     init_var = tf.global_variables_initializer() # 初始化变量
@@ -62,10 +70,20 @@ with tf.Session() as sess:
             sess.run(train_step,
                 feed_dict={X: X_train[start: end], Y: Y_train[start: end]})
             start = start + batch_size
+
+
         total_cross_entropy = sess.run(cross_entropy, 
             feed_dict={X: X_train, Y: Y_train})
         print("after ", i + 1, " epochs, cross_entropy is ", total_cross_entropy)
 
-    print("w1 : ", sess.run(w1))
-    print("w2 : ", sess.run(w2))
+    # forecast
+    test_acc = sess.run(y_hat, feed_dict={X: X_test, Y: Y_test})
+    # print("testset y_hat ", test_acc)
+    test_acc = sum(test_acc >= 0.5) / len(test_acc)
+    
+    print("acc is ", test_acc)
+
+
+    #print("w1 : ", sess.run(w1))
+    #print("w2 : ", sess.run(w2))
 
